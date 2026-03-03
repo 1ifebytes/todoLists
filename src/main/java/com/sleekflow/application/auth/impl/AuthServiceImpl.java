@@ -101,21 +101,27 @@ public class AuthServiceImpl implements IAuthService {
      * Authenticates user using email and password.
      * Returns a JWT token with 24-hour validity upon successful authentication.
      * </p>
+     * <p>
+     * <b>安全说明（Security Note）：</b> 不论账号是否存在或密码是否错误，都返回相同的错误消息，
+     * 以防止账号枚举攻击（account enumeration attack）。
+     * </p>
+     * <p>
+     * <b>Security Note:</b> Returns the same error message whether the account exists or not,
+     * to prevent account enumeration attacks.
+     * </p>
      *
      * @param request 登录请求 / Login request containing email and password
      * @return 认证响应，包含 JWT 令牌和用户信息 / Authentication response containing JWT token and user info
-     * @throws ResourceNotFoundException 如果用户不存在 / if user does not exist
-     * @throws BadCredentialsException 如果密码错误 / if password is incorrect
+     * @throws BadCredentialsException 如果邮箱或密码错误 / if email or password is incorrect
      */
     @Override
     public AuthResponse login(LoginRequest request) {
-        // 根据邮箱查找用户 / Find user by email
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+        // 根据邮箱查找用户（不抛异常以防止账号枚举） / Find user by email (don't throw to prevent account enumeration)
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
 
-        // 验证密码 / Verify password
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid credentials");
+        // 统一验证：用户不存在或密码错误都抛出相同错误 / Unified validation: same error for non-existent user or wrong password
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BadCredentialsException("Invalid email or password");
         }
 
         // 生成认证响应 / Build auth response

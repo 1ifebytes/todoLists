@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 待办事项服务实现
@@ -276,6 +277,17 @@ public class TodoServiceImpl implements ITodoService {
         if (tagIds == null || tagIds.isEmpty()) {
             return new HashSet<>();
         }
-        return new HashSet<>(tagRepository.findAllById(tagIds));
+        String callerId = UserContext.getCurrentUserId();
+        List<Tag> tags = tagRepository.findAllById(tagIds);
+
+        // Validate that all tags belong to the current user (security check)
+        Set<Tag> filteredTags = tags.stream()
+                .filter(tag -> tag.getUser().getId().equals(callerId))
+                .collect(Collectors.toSet());
+
+        if (filteredTags.size() != tagIds.size()) {
+            throw new ForbiddenException("One or more tags do not belong to you");
+        }
+        return filteredTags;
     }
 }

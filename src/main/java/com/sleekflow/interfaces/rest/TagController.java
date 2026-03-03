@@ -84,16 +84,17 @@ public class TagController {
      * Create a new tag
      * </p>
      * <p>
-     * 为当前用户创建新标签。
-     * 如果用户已存在同名标签，则返回现有标签（不创建重复标签）。
+     * 为当前用户创建新标签。标签名称在同一用户下必须唯一。
+     * 如果用户已存在同名标签，则抛出重复资源异常（HTTP 409）。
      * </p>
      * <p>
-     * Creates a new tag for the current user.
-     * If a tag with the same name already exists for the user, returns the existing tag (no duplicates).
+     * Creates a new tag for the current user. Tag names must be unique per user.
+     * If a tag with the same name already exists for the user, throws a duplicate resource exception (HTTP 409).
      * </p>
      *
      * @param request 创建标签请求体 / Request body containing tag name
      * @return 包含创建的标签信息的响应，HTTP 201 状态码 / Response containing created tag with HTTP 201 status
+     * @throws DuplicateResourceException 如果用户已存在同名标签 / if a tag with the same name already exists for the user
      */
     @Operation(summary = "Create a new tag")
     @PostMapping

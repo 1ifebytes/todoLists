@@ -1,6 +1,8 @@
 package com.sleekflow.infrastructure.exception;
 
 import com.sleekflow.interfaces.dto.response.ErrorResponse;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
  *   <li>{@link DuplicateResourceException} → HTTP 409 CONFLICT</li>
  *   <li>{@link MethodArgumentNotValidException} → HTTP 400 BAD_REQUEST（Bean Validation 失败）/ Bean Validation failure</li>
  *   <li>{@link BadCredentialsException} → HTTP 401 UNAUTHORIZED（登录凭证无效）/ Invalid login credentials</li>
+ *   <li>{@link DataIntegrityViolationException} → HTTP 409 CONFLICT（数据库唯一约束冲突）/ Database unique constraint violation</li>
  *   <li>{@link HttpMessageNotReadableException} → HTTP 400 BAD_REQUEST（JSON 格式错误）/ Malformed JSON</li>
  *   <li>{@link Exception} → HTTP 500 INTERNAL_SERVER_ERROR（通用异常捕获）/ Generic exception catch-all</li>
  * </ul>
@@ -38,9 +41,12 @@ import java.util.stream.Collectors;
  * <b>安全说明（Security Note）：</b></p>
  * <p>
  * 通用异常处理器不会泄露内部实现细节，返回通用错误消息。
+ * DataIntegrityViolationException 处理器将高并发场景下的唯一约束冲突转换为 409 状态码，防止返回 500。
  * </p>
  * <p>
  * The catch-all exception handler never leaks internal details, returns a generic error message.
+ * The DataIntegrityViolationException handler converts unique constraint violations in high-concurrency scenarios
+ * to 409 status codes, preventing 500 errors.
  * </p>
  *
  * @author SleekFlow
@@ -126,6 +132,34 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error("UNAUTHORIZED", "Invalid credentials"));
+    }
+
+    /**
+     * 处理数据完整性冲突异常
+     * <p>
+     * Handle data integrity violation exception
+     * </p>
+     * <p>
+     * 捕获数据库唯一约束冲突（如并发场景下的重复数据），返回 409 状态码。
+     * </p>
+     * <p>
+     * Catches database unique constraint violations (e.g., duplicate data in concurrent scenarios), returns 409 status code.
+     * </p>
+     *
+     * @param ex 数据完整性冲突异常 / Data integrity violation exception
+     * @return HTTP 409 响应 / HTTP 409 response
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        // Check if root cause is a constraint violation (unique constraint conflict)
+        if (ex.getRootCause() instanceof ConstraintViolationException ||
+                (ex.getCause() != null && ex.getCause().getCause() instanceof ConstraintViolationException)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(error("DUPLICATE_RESOURCE", "Resource already exists"));
+        }
+        // Other data integrity issues
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(error("DATABASE_ERROR", "Database operation failed"));
     }
 
     /**

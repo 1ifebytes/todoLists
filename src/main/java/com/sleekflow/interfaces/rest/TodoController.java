@@ -16,6 +16,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -120,10 +123,10 @@ public class TodoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueDateTo,
             @RequestParam(required = false) String tags,
             @RequestParam(required = false) Boolean owned,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortOrder) {
+            @Min(0) @RequestParam(defaultValue = "0") int page,
+            @Min(1) @Max(100) @RequestParam(defaultValue = "20") int size,
+            @Pattern(regexp = "name|status|priority|createdAt|updatedAt|dueDate") @RequestParam(defaultValue = "createdAt") String sortBy,
+            @Pattern(regexp = "asc|desc", flags = Pattern.Flag.CASE_INSENSITIVE) @RequestParam(defaultValue = "desc") String sortOrder) {
 
         List<String> tagList = (tags != null && !tags.isBlank())
                 ? Arrays.asList(tags.split(","))
