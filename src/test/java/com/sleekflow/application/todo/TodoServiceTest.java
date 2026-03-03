@@ -107,6 +107,45 @@ class TodoServiceTest {
         }
     }
 
+    @Test
+    void createTodo_duplicateTagIds_deduplicatesAndSucceeds() {
+        CreateTodoRequest req = new CreateTodoRequest("Buy milk", null, null, null, null, List.of("t1", "t1"));
+        Tag tag = Tag.builder().id("t1").name("Work").user(alice).build();
+        Todo saved = buildTodo("todo1", alice);
+        TodoResponse mapped = buildTodoResponse("todo1");
+
+        when(userRepository.findById("u1")).thenReturn(Optional.of(alice));
+        when(tagRepository.findAllById(any())).thenReturn(List.of(tag));
+        when(todoRepository.save(any(Todo.class))).thenReturn(saved);
+        when(todoAssembler.toResponse(saved)).thenReturn(mapped);
+
+        UserContext.setCurrentUserId("u1");
+        try {
+            TodoResponse response = todoService.createTodo(req);
+            assertThat(response.getMyRole()).isEqualTo(TodoRole.OWNER);
+        } finally {
+            UserContext.clear();
+        }
+    }
+
+    @Test
+    void createTodo_foreignTag_throwsForbiddenException() {
+        CreateTodoRequest req = new CreateTodoRequest("Buy milk", null, null, null, null, List.of("t2"));
+        Tag foreignTag = Tag.builder().id("t2").name("BobTag").user(bob).build();
+
+        when(userRepository.findById("u1")).thenReturn(Optional.of(alice));
+        when(tagRepository.findAllById(any())).thenReturn(List.of(foreignTag));
+
+        UserContext.setCurrentUserId("u1");
+        try {
+            assertThatThrownBy(() -> todoService.createTodo(req))
+                    .isInstanceOf(ForbiddenException.class)
+                    .hasMessageContaining("do not belong to you");
+        } finally {
+            UserContext.clear();
+        }
+    }
+
     // ── getTodo ───────────────────────────────────────────────────────────────
 
     @Test

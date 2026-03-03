@@ -29,3 +29,4 @@ README.md
 Dockerfile
 docker-compose.yml
 .dockerignore
+!/code-test-docs/

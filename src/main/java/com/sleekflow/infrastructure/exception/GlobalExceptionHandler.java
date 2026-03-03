@@ -10,7 +10,9 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
  *   <li>{@link ForbiddenException} → HTTP 403 FORBIDDEN</li>
  *   <li>{@link DuplicateResourceException} → HTTP 409 CONFLICT</li>
  *   <li>{@link MethodArgumentNotValidException} → HTTP 400 BAD_REQUEST（Bean Validation 失败）/ Bean Validation failure</li>
+ *   <li>{@link ConstraintViolationException} / {@link HandlerMethodValidationException} / {@link IllegalArgumentException} → HTTP 400 BAD_REQUEST（参数校验失败）/ Parameter validation failure</li>
  *   <li>{@link BadCredentialsException} → HTTP 401 UNAUTHORIZED（登录凭证无效）/ Invalid login credentials</li>
  *   <li>{@link DataIntegrityViolationException} → HTTP 409 CONFLICT（数据库唯一约束冲突）/ Database unique constraint violation</li>
  *   <li>{@link HttpMessageNotReadableException} → HTTP 400 BAD_REQUEST（JSON 格式错误）/ Malformed JSON</li>
@@ -120,6 +123,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error("VALIDATION_FAILED", message));
     }
 
+    @ExceptionHandler({
+            ConstraintViolationException.class,
+            HandlerMethodValidationException.class,
+            IllegalArgumentException.class
+    })
+    public ResponseEntity<ErrorResponse> handleParamValidation(Exception ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(error("INVALID_REQUEST", ex.getMessage()));
+    }
+
     /**
      * 处理登录凭证无效异常
      * <p>
@@ -141,9 +154,11 @@ public class GlobalExceptionHandler {
      * </p>
      * <p>
      * 捕获数据库唯一约束冲突（如并发场景下的重复数据），返回 409 状态码。
+     * 检测方式包括：异常消息关键词、SQLState、根因类型。
      * </p>
      * <p>
      * Catches database unique constraint violations (e.g., duplicate data in concurrent scenarios), returns 409 status code.
+     * Detection methods: exception message keywords, SQLState, root cause type.
      * </p>
      *
      * @param ex 数据完整性冲突异常 / Data integrity violation exception
@@ -151,15 +166,20 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
-        // Check if root cause is a constraint violation (unique constraint conflict)
-        if (ex.getRootCause() instanceof ConstraintViolationException ||
-                (ex.getCause() != null && ex.getCause().getCause() instanceof ConstraintViolationException)) {
+        String lowerMessage = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase();
+        boolean isUniqueViolation = lowerMessage.contains("duplicate")
+                || lowerMessage.contains("unique")
+                || hasCause(ex, org.hibernate.exception.ConstraintViolationException.class)
+                || hasCause(ex, SQLIntegrityConstraintViolationException.class);
+
+        if (isUniqueViolation) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(error("DUPLICATE_RESOURCE", "Resource already exists"));
         }
-        // Other data integrity issues
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(error("DATABASE_ERROR", "Database operation failed"));
+
+        // Other data integrity conflicts should still be 409 (not 500).
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(error("DATA_INTEGRITY_VIOLATION", "Database constraint violation"));
     }
 
     /**
@@ -213,5 +233,16 @@ public class GlobalExceptionHandler {
                 .message(message)
                 .timestamp(LocalDateTime.now().toString())
                 .build();
+    }
+
+    private boolean hasCause(Throwable ex, Class<? extends Throwable> causeType) {
+        Throwable current = ex;
+        while (current != null) {
+            if (causeType.isInstance(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }

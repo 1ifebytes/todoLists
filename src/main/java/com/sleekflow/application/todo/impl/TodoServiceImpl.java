@@ -278,14 +278,18 @@ public class TodoServiceImpl implements ITodoService {
             return new HashSet<>();
         }
         String callerId = UserContext.getCurrentUserId();
-        List<Tag> tags = tagRepository.findAllById(tagIds);
+
+        // Deduplicate tagIds first to avoid false positives
+        Set<String> uniqueTagIds = new HashSet<>(tagIds);
+        List<Tag> tags = tagRepository.findAllById(uniqueTagIds);
 
         // Validate that all tags belong to the current user (security check)
         Set<Tag> filteredTags = tags.stream()
                 .filter(tag -> tag.getUser().getId().equals(callerId))
                 .collect(Collectors.toSet());
 
-        if (filteredTags.size() != tagIds.size()) {
+        // Compare with deduplicated tagIds, not original tagIds
+        if (filteredTags.size() != uniqueTagIds.size()) {
             throw new ForbiddenException("One or more tags do not belong to you");
         }
         return filteredTags;

@@ -25,6 +25,7 @@ A real-time collaborative TODO list REST API built with Java 21, Spring Boot 3.3
 - **Activity Feed**: Immutable audit log tracking all todo mutations
 - **Team Management**: Create teams and manage members with ADMIN/MEMBER roles
 - **JWT Authentication**: Secure token-based authentication with 24-hour expiration
+- **Input & Data Integrity Hardening**: Strict pagination/sorting validation, tag ownership checks, and 409 mapping for DB constraint conflicts
 
 ---
 
@@ -273,7 +274,7 @@ mvn test
 
 **Expected Output:**
 ```
-Tests run: 89, Failures: 0, Errors: 0, Skipped: 9
+Tests run: 96, Failures: 0, Errors: 0, Skipped: 9
 BUILD SUCCESS
 ```
 
@@ -281,10 +282,10 @@ BUILD SUCCESS
 
 | Layer | Test Type | Count | Coverage |
 |-------|-----------|-------|----------|
-| **Service** | Unit Tests (Mockito) | 43 | ~90% |
-| **Controller** | Integration Tests (MockMvc) | 37 | ~85% |
-| **Repository** | Integration Tests (Testcontainers) | 8 | ~80% |
-| **Total** | | **89** | **~80%+** |
+| **Service** | Unit Tests (Mockito) | 46 | ~90% |
+| **Controller** | Integration Tests (MockMvc) | 41 | ~85% |
+| **Repository** | Integration Tests (Testcontainers) | 9 | ~80% |
+| **Total** | | **96** | **~80%+** |
 
 ### Run Specific Test
 

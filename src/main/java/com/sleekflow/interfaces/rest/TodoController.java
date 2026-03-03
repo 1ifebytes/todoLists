@@ -33,11 +33,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Todo Controller - 待办事项管理接口
@@ -60,9 +62,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/todos")
 @RequiredArgsConstructor
+@Validated
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Todos", description = "Todo management")
 public class TodoController {
+
+    private static final Set<String> ALLOWED_SORT_FIELDS =
+            Set.of("name", "status", "priority", "createdAt", "updatedAt", "dueDate");
 
     private final ITodoService todoService;
     private final IActivityFeedService activityFeedService;
@@ -127,6 +133,7 @@ public class TodoController {
             @Min(1) @Max(100) @RequestParam(defaultValue = "20") int size,
             @Pattern(regexp = "name|status|priority|createdAt|updatedAt|dueDate") @RequestParam(defaultValue = "createdAt") String sortBy,
             @Pattern(regexp = "asc|desc", flags = Pattern.Flag.CASE_INSENSITIVE) @RequestParam(defaultValue = "desc") String sortOrder) {
+        validateListTodosParams(page, size, sortBy, sortOrder);
 
         List<String> tagList = (tags != null && !tags.isBlank())
                 ? Arrays.asList(tags.split(","))
@@ -321,5 +328,20 @@ public class TodoController {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         return ResponseEntity.ok(ApiResponse.success(
                 activityFeedService.listFeed(id, pageable)));
+    }
+
+    private void validateListTodosParams(int page, int size, String sortBy, String sortOrder) {
+        if (page < 0) {
+            throw new IllegalArgumentException("page must be >= 0");
+        }
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("size must be between 1 and 100");
+        }
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException("invalid sortBy field");
+        }
+        if (!"asc".equalsIgnoreCase(sortOrder) && !"desc".equalsIgnoreCase(sortOrder)) {
+            throw new IllegalArgumentException("invalid sortOrder");
+        }
     }
 }

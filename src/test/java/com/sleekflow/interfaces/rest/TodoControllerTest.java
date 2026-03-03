@@ -121,6 +121,30 @@ class TodoControllerTest {
                 .andExpect(jsonPath("$.data.totalElements").value(1));
     }
 
+    @Test
+    void listTodos_invalidSortBy_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/todos").param("sortBy", "ownerId"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listTodos_negativePage_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/todos").param("page", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listTodos_sizeTooLarge_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/todos").param("size", "999"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void listTodos_invalidSortOrder_returns400() throws Exception {
+        mockMvc.perform(get("/api/v1/todos").param("sortOrder", "up"))
+                .andExpect(status().isBadRequest());
+    }
+
     // ── GET /todos/{id} ───────────────────────────────────────────────────────
 
     @Test
