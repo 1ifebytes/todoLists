@@ -69,12 +69,8 @@ com.sleekflow/
     └── config/         # Configuration classes
 ```
 
-### Design Patterns
+### Design Patterns (GoF)
 
-- **Domain-Driven Design (DDD)**
-- **Repository Pattern**
-- **Assembler Pattern**
-- **Dependency Injection**
 - **Builder Pattern**
 
 ---
