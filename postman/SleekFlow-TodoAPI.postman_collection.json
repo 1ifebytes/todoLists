@@ -1,0 +1,845 @@
+{
+  "info": {
+    "name": "SleekFlow TODO API",
+    "description": "Complete API collection for SleekFlow TODO List application",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{base_url}}",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "{{jwt_token}}",
+      "type": "string"
+    },
+    {
+      "key": "alice_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "bob_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "todo_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tag_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "team_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Alice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"username\": \"alice\",\n  \"password\": \"Pass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Bob",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bob@example.com\",\n  \"username\": \"bob\",\n  \"password\": \"Pass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Alice",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save JWT token and user ID",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('jwt_token', jsonData.data.token);",
+                  "    pm.collectionVariables.set('alice_id', jsonData.data.user.id);",
+                  "    console.log('JWT Token saved:', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"Pass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login Bob",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('bob_id', jsonData.data.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bob@example.com\",\n  \"password\": \"Pass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints - register users and login to get JWT token"
+    },
+    {
+      "name": "Todo CRUD",
+      "item": [
+        {
+          "name": "Create Todo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('todo_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Review PR #42\",\n  \"description\": \"Review and merge the feature branch\",\n  \"priority\": \"HIGH\",\n  \"dueDate\": \"2025-06-15T10:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Todo with Tags",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Buy groceries\",\n  \"priority\": \"MEDIUM\",\n  \"tags\": [\"Personal\", \"Shopping\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List All Todos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos?page=0&size=20&sortBy=dueDate&sortOrder=ASC",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "dueDate"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos?status=IN_PROGRESS&priority=HIGH",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "IN_PROGRESS"
+                },
+                {
+                  "key": "priority",
+                  "value": "HIGH"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos?dueDateFrom=2025-06-01T00:00:00&dueDateTo=2025-06-30T23:59:59",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"],
+              "query": [
+                {
+                  "key": "dueDateFrom",
+                  "value": "2025-06-01T00:00:00"
+                },
+                {
+                  "key": "dueDateTo",
+                  "value": "2025-06-30T23:59:59"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos?tags=Work,Urgent",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos"],
+              "query": [
+                {
+                  "key": "tags",
+                  "value": "Work,Urgent"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Todo by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Todo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Review PR #42 - In Progress\",\n  \"status\": \"IN_PROGRESS\",\n  \"description\": \"Currently reviewing the changes\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Todo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Todo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Create, read, update, and delete todos with filtering and sorting"
+    },
+    {
+      "name": "Tags",
+      "item": [
+        {
+          "name": "List Tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Tag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('tag_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Work\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tags",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Tag",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/tags/{{tag_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tags", "{{tag_id}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage user-scoped tags for organizing todos"
+    },
+    {
+      "name": "RBAC (Share)",
+      "item": [
+        {
+          "name": "Share Todo with Bob (Editor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{bob_id}}\",\n  \"role\": \"EDITOR\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}/share",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}", "share"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Share Todo with Bob (Viewer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{bob_id}}\",\n  \"role\": \"VIEWER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}/share",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}", "share"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}", "permissions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unshare Todo",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}/share/{{bob_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}", "share", "{{bob_id}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Share todos with other users and manage permissions (Owner/Editor/Viewer)"
+    },
+    {
+      "name": "Activity Feed",
+      "item": [
+        {
+          "name": "Get Activities",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/todos/{{todo_id}}/activities?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["todos", "{{todo_id}}", "activities"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "View activity feed for a todo (audit trail of all changes)"
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "Create Team",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('team_id', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Development Team\",\n  \"description\": \"Core development squad\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List My Teams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Team Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Team",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Engineering Team\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Team Members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}", "members"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Add Team Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{bob_id}}\",\n  \"role\": \"MEMBER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}", "members"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove Team Member",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}/members/{{bob_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}", "members", "{{bob_id}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Team",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/teams/{{team_id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["teams", "{{team_id}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Create and manage teams with member roles (ADMIN/MEMBER)"
+    }
+  ]
+}

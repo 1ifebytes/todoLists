@@ -1,0 +1,31 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Build logs
+*.log
+
+# Git
+.git/
+.gitignore
+
+# Docs
+README.md
+*.md
+!src/main/resources/**/*.md
+
+# Test files (keep source, exclude compiled)
+**/src/test/
+
+# Docker files
+Dockerfile
+docker-compose.yml
+.dockerignore

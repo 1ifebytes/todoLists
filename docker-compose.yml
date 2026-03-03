@@ -1,0 +1,58 @@
+services:
+  mysql:
+    image: mysql:9.5.0
+    container_name: sleekflow-todo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: todolist_db
+      MYSQL_USER: sleekflow
+      MYSQL_PASSWORD: sleekflow
+    ports:
+      - "3307:3306"  # Host port 3307 to avoid conflict with local MySQL
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - sleekflow-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sleekflow-todo-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: todolist_db
+      MYSQL_USER: sleekflow
+      MYSQL_PASSWORD: sleekflow
+      JWT_SECRET: sleekflow-super-secret-key-change-in-production-at-least-256-bits!!
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - sleekflow-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  sleekflow-network:
+    driver: bridge
